@@ -1,18 +1,8 @@
-# T-Rex CMD — mostrador para Amazfit T-Rex 3
+# CMD — mostrador para Amazfit T-Rex 3
 
 Mostrador estilo prompt de comando (Zepp OS, 480x480): hora, data, passos, batimentos, kcal e distância.
 
-```
-            18:30
- C:\T-Rex>date /t
- qua 18/11/2026
- C:\T-Rex>status
-   steps ...... 3432
-   heart_rate . 64
-   kcal ....... 150
-   distance ... 2.52 km
- C:\T-Rex>_
-```
+![Preview do mostrador](docs/preview.png)
 
 Tem `appId` próprio, então pode ficar instalado junto com os outros mostradores.
 

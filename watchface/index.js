@@ -1,15 +1,15 @@
 /**
- * T-Rex CMD — mostrador estilo prompt de comando para Amazfit T-Rex 3 (480x480, Zepp OS)
+ * CMD — mostrador estilo prompt de comando para Amazfit T-Rex 3 (480x480, Zepp OS)
  *
  *              18:30
- *   C:\T-Rex>date /t
+ *   C:\>date /t
  *   qua 18/11/2026
- *   C:\T-Rex>status
+ *   C:\>status
  *     steps ...... 3432
  *     heart_rate . 64
  *     kcal ....... 150
  *     distance ... 2.52 km
- *   C:\T-Rex>_          (cursor piscando)
+ *   C:\>_          (cursor piscando)
  */
 import { createWidget, widget, align, prop, text_style } from '@zos/ui'
 import { Time, Step, HeartRate, Calorie, Distance } from '@zos/sensor'
@@ -29,7 +29,7 @@ const ADV = 0.6 // JetBrains Mono: 600/1000 em por caractere
 const X = 88
 const SIZE = 24
 const LINE_H = 33
-const PROMPT = 'C:\\T-Rex>'
+const PROMPT = 'C:\\>'
 const CURSOR_MS = 500
 
 // y de cada linha (topo)
@@ -90,7 +90,7 @@ class Row {
   }
 }
 
-/** `C:\T-Rex>comando` */
+/** `C:\>comando` */
 function commandLine(y, cmd) {
   return new Row(y, [
     { text: PROMPT, color: C.text },

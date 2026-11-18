@@ -1,8 +1,8 @@
 {
   "configVersion": "v3",
   "app": {
-    "appId": 1094120,
-    "appName": "T-Rex CMD",
+    "appId": 1137034,
+    "appName": "CMD",
     "appType": "watchface",
     "version": {
       "code": 1,
@@ -47,10 +47,10 @@
   },
   "i18n": {
     "en-US": {
-      "appName": "T-Rex CMD"
+      "appName": "CMD"
     },
     "pt-BR": {
-      "appName": "T-Rex CMD"
+      "appName": "CMD"
     }
   },
   "defaultLanguage": "en-US"
