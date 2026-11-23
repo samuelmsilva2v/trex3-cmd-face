@@ -13,7 +13,7 @@ Tem `appId` próprio, então pode ficar instalado junto com os outros mostradore
 cmd-face/
 ├── app.json                         # manifesto (appType: watchface, permissões dos sensores)
 ├── watchface/index.js               # layout + sensores
-└── assets/default.r/
+└── assets/default.w480-r/
     ├── icon.png                     # preview 324x324 (lista de mostradores)
     └── fonts/JetBrainsMono-Subset.ttf
 ```
@@ -81,7 +81,7 @@ It has its own `appId`, so it can be installed alongside the other watch faces.
 cmd-face/
 ├── app.json                         # manifest (appType: watchface, sensor permissions)
 ├── watchface/index.js               # layout + sensors
-└── assets/default.r/
+└── assets/default.w480-r/
     ├── icon.png                     # 324x324 preview (watch face list)
     └── fonts/JetBrainsMono-Subset.ttf
 ```
