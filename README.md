@@ -1,7 +1,7 @@
 # CMD — mostrador para Amazfit T-Rex 3
 [🇺🇸 Read in English](#cmd--watch-face-for-amazfit-t-rex-3)
 
-Mostrador estilo prompt de comando (Zepp OS, 480x480): hora, data, passos, batimentos, kcal e distância.
+Mostrador estilo prompt de comando (Zepp OS, 480x480): hora, data, passos, batimentos, kcal, distância e sono.
 
 ![Preview do mostrador](docs/preview.png)
 
@@ -54,12 +54,14 @@ Tudo fica no topo de `watchface/index.js`:
 - **Prompt:** `PROMPT`
 - **Velocidade do cursor:** `CURSOR_MS` (padrão 500 ms)
 - **Posições:** `X`, `SIZE`, `LINE_H` e o objeto `Y` com o topo de cada linha
+- **Hora:** dígitos bitmap 5x7 em `GLYPHS`, tamanho do pixel em `PX`, sombra em `SHADOW`
 
 ## Comportamento
 
 - O cursor `_` pisca só com a tela acesa; quando a tela apaga, o timer para.
 - Batimento sem medição recente aparece como `--`.
 - Distância vem em metros do sensor e é exibida em km com 2 casas.
+- Sono: total de horas dormidas registradas pelo relógio (`7h32m`). Sem registro, aparece `--`. O sistema recalcula o sono a cada ~30 min, então o mostrador relê a cada minuto e ao acender a tela.
 - Não tem versão AOD (tela sempre ligada) ainda.
 
 Fonte: JetBrains Mono (SIL OFL 1.1), reduzida aos caracteres usados.
@@ -69,7 +71,7 @@ Fonte: JetBrains Mono (SIL OFL 1.1), reduzida aos caracteres usados.
 # CMD — watch face for Amazfit T-Rex 3
 [🇧🇷 Leia em Português](#cmd--mostrador-para-amazfit-t-rex-3)
 
-Command prompt style watch face (Zepp OS, 480x480): time, date, steps, heart rate, calories and distance.
+Command prompt style watch face (Zepp OS, 480x480): time, date, steps, heart rate, calories, distance and sleep.
 
 ![Watch face preview](docs/preview.png)
 
@@ -122,12 +124,14 @@ Everything is at the top of `watchface/index.js`:
 - **Prompt:** `PROMPT`
 - **Cursor speed:** `CURSOR_MS` (default 500 ms)
 - **Positions:** `X`, `SIZE`, `LINE_H` and the `Y` object with the top of each line
+- **Time:** 5x7 bitmap digits in `GLYPHS`, pixel size in `PX`, shadow offset in `SHADOW`
 
 ## Behavior
 
 - The `_` cursor only blinks while the screen is on; the timer stops when the screen turns off.
 - Heart rate with no recent reading shows as `--`.
 - Distance comes from the sensor in meters and is shown in km with 2 decimals.
+- Sleep: total sleep recorded by the watch (`7h32m`). With no record it shows `--`. The system recalculates sleep about every 30 min, so the face re-reads it every minute and when the screen wakes up.
 - No AOD (always-on display) version yet.
 
 Font: JetBrains Mono (SIL OFL 1.1), subset to the characters used.

@@ -1,7 +1,8 @@
 /**
  * CMD — mostrador estilo prompt de comando para Amazfit T-Rex 3 (480x480, Zepp OS)
  *
- *              18:30
+ *   C:\>time /t
+ *   ██ ██  ██ ██    (hora em dígitos bitmap 5x7 com sombra, feitos de FILL_RECT)
  *   C:\>date /t
  *   qua 18/11/2026
  *   C:\>status
@@ -9,16 +10,18 @@
  *     heart_rate . 64
  *     kcal ....... 150
  *     distance ... 2.52 km
+ *     sleep ...... 7h32m      (-- sem registro de sono)
  *   C:\>_          (cursor piscando)
  */
-import { createWidget, widget, align, prop, text_style } from '@zos/ui'
-import { Time, Step, HeartRate, Calorie, Distance } from '@zos/sensor'
+import { createWidget, deleteWidget, widget, align, prop, text_style } from '@zos/ui'
+import { Time, Step, HeartRate, Calorie, Distance, Sleep } from '@zos/sensor'
 
 // ---------- tema ----------
 const C = {
   text: 0xc0c0c0, // saída e prompt
   cmd: 0xffffff, // comandos digitados
   dot: 0x5f5e5a, // pontinhos de alinhamento
+  shadow: 0x3a3a38, // sombra dos dígitos da hora
   bg: 0x000000
 }
 
@@ -28,24 +31,53 @@ const ADV = 0.6 // JetBrains Mono: 600/1000 em por caractere
 
 const X = 88
 const SIZE = 24
-const LINE_H = 33
+const LINE_H = 29
 const PROMPT = 'C:\\>'
 const CURSOR_MS = 500
 
 // y de cada linha (topo)
 const Y = {
-  dateCmd: 157,
-  date: 190,
-  statusCmd: 229,
-  steps: 262,
-  hr: 296,
-  kcal: 329,
-  dist: 362,
-  prompt: 402
+  timeCmd: 52,
+  time: 86,
+  dateCmd: 162,
+  date: 191,
+  statusCmd: 223,
+  steps: 252,
+  hr: 281,
+  kcal: 310,
+  dist: 339,
+  sleep: 368,
+  prompt: 400
+}
+
+// ---------- hora em bitmap 5x7 (estilo fonte de BIOS) ----------
+const PX = 9.6 // tamanho de cada "pixel" do bitmap (2/3 de uma coluna do console)
+const SHADOW = 4
+const GLYPHS = {
+  0: ['.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.'],
+  1: ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
+  2: ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'],
+  3: ['#####', '...#.', '..#..', '...#.', '....#', '#...#', '.###.'],
+  4: ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'],
+  5: ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
+  6: ['..##.', '.#...', '#....', '####.', '#...#', '#...#', '.###.'],
+  7: ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'],
+  8: ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'],
+  9: ['.###.', '#...#', '#...#', '.####', '....#', '...#.', '.##..'],
+  ':': ['.', '.', '#', '.', '#', '.', '.']
 }
 
 const DAYS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'] // Time.getDay(): 1 = segunda ... 7 = domingo
 const pad = (n) => String(n).padStart(2, '0')
+// minutos de sono → "7h32m"; null quando o relógio não registrou sono
+const sleepText = (min) => (min > 0 ? `${Math.floor(min / 60)}h${pad(min % 60)}m` : null)
+const sleepMinutes = (s) => {
+  try {
+    return (s.getInfo() || {}).totalTime || 0
+  } catch (e) {
+    return 0 // sem permissão ou sem dado
+  }
+}
 
 function text(props) {
   return createWidget(widget.TEXT, {
@@ -90,6 +122,57 @@ class Row {
   }
 }
 
+/**
+ * Desenha um glifo em retângulos: cada sequência de '#' numa linha vira um FILL_RECT
+ * (primeiro a sombra deslocada, depois a cor por cima). Devolve os widgets pra poder apagar.
+ */
+function drawGlyph(ch, x, y) {
+  const out = []
+  for (const [d, color] of [[SHADOW, C.shadow], [0, C.text]]) {
+    GLYPHS[ch].forEach((row, j) => {
+      for (let i = 0; i < row.length; i++) {
+        if (row[i] !== '#') continue
+        let k = i
+        while (row[k + 1] === '#') k++
+        const x0 = Math.round(x + i * PX)
+        out.push(
+          createWidget(widget.FILL_RECT, {
+            x: x0 + d,
+            y: Math.round(y + j * PX) + d,
+            w: Math.round(x + (k + 1) * PX) - x0,
+            h: Math.ceil(PX),
+            color
+          })
+        )
+        i = k
+      }
+    })
+  }
+  return out
+}
+
+/** Hora HH:MM em bitmap; só redesenha os dígitos que mudaram. */
+class BlockClock {
+  constructor(x, y) {
+    // colunas: dígito = 5 + 1 de espaço; ':' = 1 + 1
+    this.xs = [0, 6, 14, 20].map((c) => x + c * PX)
+    this.y = y
+    this.digits = ['', '', '', '']
+    this.widgets = [[], [], [], []]
+    drawGlyph(':', x + 12 * PX, y)
+  }
+
+  set(hhmm) {
+    const d = hhmm.replace(':', '')
+    for (let i = 0; i < 4; i++) {
+      if (d[i] === this.digits[i]) continue
+      this.widgets[i].forEach((w) => deleteWidget(w))
+      this.widgets[i] = drawGlyph(d[i], this.xs[i], this.y)
+      this.digits[i] = d[i]
+    }
+  }
+}
+
 /** `C:\>comando` */
 function commandLine(y, cmd) {
   return new Row(y, [
@@ -116,20 +199,11 @@ WatchFace({
     this.hr = new HeartRate()
     this.cal = new Calorie()
     this.dist = new Distance()
-
-    // ---------- hora ----------
-    this.tTime = text({
-      x: 40,
-      y: 56,
-      w: 400,
-      h: 88,
-      text: '00:00',
-      color: C.text,
-      text_size: 77,
-      align_h: align.CENTER_H
-    })
+    this.sleep = new Sleep()
 
     // ---------- console ----------
+    commandLine(Y.timeCmd, 'time /t')
+    this.clock = new BlockClock(X, Y.time)
     commandLine(Y.dateCmd, 'date /t')
     this.lDate = new Row(Y.date, [{ text: '', color: C.text }])
     commandLine(Y.statusCmd, 'status')
@@ -137,6 +211,7 @@ WatchFace({
     this.lHr = statLine(Y.hr, 'heart_rate')
     this.lKcal = statLine(Y.kcal, 'kcal')
     this.lDist = statLine(Y.dist, 'distance')
+    this.lSleep = statLine(Y.sleep, 'sleep')
 
     new Row(Y.prompt, [{ text: PROMPT, color: C.text }])
     this.cursor = text({
@@ -176,7 +251,7 @@ WatchFace({
       } catch (e) {
         year = new Date().getFullYear()
       }
-      this.tTime.setProperty(prop.MORE, { text: `${pad(t.getHours())}:${pad(t.getMinutes())}` })
+      this.clock.set(`${pad(t.getHours())}:${pad(t.getMinutes())}`)
       this.lDate.set(0, `${DAYS[t.getDay() - 1] || ''} ${pad(t.getDate())}/${pad(t.getMonth())}/${year}`)
     }
     this.updateSteps = () => this.lSteps.set(2, ` ${this.step.getCurrent()}`)
@@ -189,15 +264,21 @@ WatchFace({
       const meters = this.dist.getCurrent() // em metros
       this.lDist.set(2, ` ${(meters / 1000).toFixed(2)} km`)
     }
+    this.updateSleep = () => this.lSleep.set(2, ` ${sleepText(sleepMinutes(this.sleep)) || '--'}`)
     this.updateAll = () => {
       this.updateTime()
       this.updateSteps()
       this.updateHr()
       this.updateKcal()
       this.updateDist()
+      this.updateSleep()
     }
 
-    this.time.onPerMinute(this.updateTime)
+    // sono não tem evento de mudança (o sistema recalcula a cada ~30 min): lê a cada minuto
+    this.time.onPerMinute(() => {
+      this.updateTime()
+      this.updateSleep()
+    })
     this.step.onChange(this.updateSteps)
     this.hr.onLastChange(this.updateHr)
     this.cal.onChange(this.updateKcal)
